@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import DeleteIcon from "@mui/icons-material/Delete";
+import KeyboardArrowLeftIcon from "@mui/icons-material/KeyboardArrowLeft";
 import {
   Alert,
   Box,
@@ -28,6 +29,7 @@ import {
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
 import React, { useState } from "react";
+import { useNavigate } from "react-router";
 import { ApiResponse } from "../../../network-interface";
 import useApp from "../../shared/hooks/useApp";
 import { useStateConfirmationDialog } from "../../stores/app/hooks";
@@ -53,6 +55,7 @@ const VacinasPage: React.FC = () => {
   const { startConfirmationDialogFlow } = useStateConfirmationDialog();
   const { openSnackbar } = useApp();
 
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
 
   const [isAddVacinaDialogOpen, setIsAddVacinaDialogOpen] = useState(false);
@@ -153,9 +156,21 @@ const VacinasPage: React.FC = () => {
   return (
     <Container>
       <Box my={4}>
-        <Stack direction="row" spacing={2} justifyContent="space-between">
+        <Button
+          startIcon={<KeyboardArrowLeftIcon />}
+          onClick={() => navigate("/")}
+        >
+          Voltar
+        </Button>
+
+        <Stack
+          direction="row"
+          spacing={2}
+          justifyContent="space-between"
+          mt={2}
+        >
           <Typography variant="h4" gutterBottom>
-            Listagem de Vacinas
+            Vacinas
           </Typography>
 
           <Button

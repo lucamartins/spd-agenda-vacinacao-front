@@ -26,13 +26,25 @@ const HomePage = () => {
         >
           Gerenciar Vacinas
         </Button>
-        <Button variant="text" startIcon={<PersonOutlineIcon />}>
-          Gerenciar Usuários
-        </Button>
-        <Button variant="text" startIcon={<MedicalInformationIcon />}>
+        <Button
+          variant="text"
+          startIcon={<MedicalInformationIcon />}
+          onClick={() => navigate("alergias")}
+        >
           Gerenciar Alergias
         </Button>
-        <Button variant="text" startIcon={<TodayIcon />}>
+        <Button
+          variant="text"
+          startIcon={<PersonOutlineIcon />}
+          onClick={() => navigate("usuarios")}
+        >
+          Gerenciar Usuários
+        </Button>
+        <Button
+          variant="text"
+          startIcon={<TodayIcon />}
+          onClick={() => navigate("agendas")}
+        >
           Gerenciar Agendas
         </Button>
       </Stack>
