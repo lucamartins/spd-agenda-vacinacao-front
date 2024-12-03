@@ -33,9 +33,9 @@ import { useNavigate } from "react-router";
 import { ApiResponse } from "../../../network-interface";
 import useApp from "../../shared/hooks/useApp";
 import { useStateConfirmationDialog } from "../../stores/app/hooks";
-import { Alergia } from "../alergias/AlergiasPage";
+import { AlergiaEntity } from "../alergias/AlergiasPage";
 
-type Usuario = {
+export type UsuarioEntity = {
   id: string;
   nome: string;
   dataNascimento: string;
@@ -45,10 +45,10 @@ type Usuario = {
   setor: string;
   cidade: string;
   uf: string;
-  alergias: Alergia[];
+  alergias: AlergiaEntity[];
 };
 
-const USUARIO_FORM_EMPTY: Omit<Usuario, "id" | "alergias"> = {
+const USUARIO_FORM_EMPTY: Omit<UsuarioEntity, "id" | "alergias"> = {
   nome: "",
   dataNascimento: "",
   sexo: "MASCULINO",
@@ -102,7 +102,7 @@ const UsuariosPage: React.FC = () => {
     string[]
   >([]);
   const [novoUsuario, setNovoUsuario] =
-    useState<Omit<Usuario, "id" | "alergias">>(USUARIO_FORM_EMPTY);
+    useState<Omit<UsuarioEntity, "id" | "alergias">>(USUARIO_FORM_EMPTY);
 
   const {
     data: usuarios,
@@ -111,7 +111,7 @@ const UsuariosPage: React.FC = () => {
   } = useQuery({
     queryKey: ["usuarios"],
     queryFn: async () => {
-      const response = await axios.get<ApiResponse<Usuario[]>>(
+      const response = await axios.get<ApiResponse<UsuarioEntity[]>>(
         "http://localhost:8080/usuarios"
       );
       return response.data.data;
@@ -134,7 +134,7 @@ const UsuariosPage: React.FC = () => {
   });
 
   const addUsuarioMutation = useMutation({
-    mutationFn: async (usuario: Omit<Usuario, "id" | "alergias">) => {
+    mutationFn: async (usuario: Omit<UsuarioEntity, "id" | "alergias">) => {
       await axios.post("http://localhost:8080/usuarios", usuario);
     },
     onSuccess: () => {

@@ -5,6 +5,7 @@ import {
 } from "react-router";
 import { GlobalLayout } from "../app/layouts";
 import {
+  AgendasPage,
   AlergiasPage,
   HomePage,
   UsuariosPage,
@@ -18,6 +19,7 @@ const appRouter = createBrowserRouter(
       <Route path="vacinas" element={<VacinasPage />} />
       <Route path="alergias" element={<AlergiasPage />} />
       <Route path="usuarios" element={<UsuariosPage />} />
+      <Route path="agendas" element={<AgendasPage />} />
     </Route>
   )
 );

@@ -30,12 +30,12 @@ import useApp from "../../shared/hooks/useApp";
 import { useStateConfirmationDialog } from "../../stores/app/hooks";
 import { useNavigate } from "react-router";
 
-export type Alergia = {
+export type AlergiaEntity = {
   id: string;
   nome: string;
 };
 
-const ALERGIA_FORM_EMPTY: Omit<Alergia, "id"> = {
+const ALERGIA_FORM_EMPTY: Omit<AlergiaEntity, "id"> = {
   nome: "",
 };
 
@@ -51,7 +51,7 @@ const AlergiasPage: React.FC = () => {
     string[]
   >([]);
   const [novaAlergia, setNovaAlergia] =
-    useState<Omit<Alergia, "id">>(ALERGIA_FORM_EMPTY);
+    useState<Omit<AlergiaEntity, "id">>(ALERGIA_FORM_EMPTY);
 
   const {
     data: alergias,
@@ -60,7 +60,7 @@ const AlergiasPage: React.FC = () => {
   } = useQuery({
     queryKey: ["alergias"],
     queryFn: async () => {
-      const response = await axios.get<ApiResponse<Alergia[]>>(
+      const response = await axios.get<ApiResponse<AlergiaEntity[]>>(
         "http://localhost:8080/alergias"
       );
       return response.data.data;
@@ -83,7 +83,7 @@ const AlergiasPage: React.FC = () => {
   });
 
   const addAlergiaMutation = useMutation({
-    mutationFn: async (alergia: Omit<Alergia, "id">) => {
+    mutationFn: async (alergia: Omit<AlergiaEntity, "id">) => {
       await axios.post("http://localhost:8080/alergias", alergia);
     },
     onSuccess: () => {

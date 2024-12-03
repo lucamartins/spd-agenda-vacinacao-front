@@ -34,7 +34,7 @@ import { ApiResponse } from "../../../network-interface";
 import useApp from "../../shared/hooks/useApp";
 import { useStateConfirmationDialog } from "../../stores/app/hooks";
 
-type Vacina = {
+export type VacinaEntity = {
   id: number;
   titulo: string;
   descricao: string;
@@ -43,7 +43,7 @@ type Vacina = {
   intervalo: number;
 };
 
-const VACINA_FORM_EMPTY: Omit<Vacina, "id"> = {
+const VACINA_FORM_EMPTY: Omit<VacinaEntity, "id"> = {
   titulo: "",
   descricao: "",
   doses: 1,
@@ -63,7 +63,7 @@ const VacinasPage: React.FC = () => {
     []
   );
   const [novaVacina, setNovaVacina] =
-    useState<Omit<Vacina, "id">>(VACINA_FORM_EMPTY);
+    useState<Omit<VacinaEntity, "id">>(VACINA_FORM_EMPTY);
 
   const {
     data: vacinas,
@@ -72,7 +72,7 @@ const VacinasPage: React.FC = () => {
   } = useQuery({
     queryKey: ["vacinas"],
     queryFn: async () => {
-      const response = await axios.get<ApiResponse<Vacina[]>>(
+      const response = await axios.get<ApiResponse<VacinaEntity[]>>(
         "http://localhost:8080/vacinas"
       );
       return response.data.data;
@@ -95,7 +95,7 @@ const VacinasPage: React.FC = () => {
   });
 
   const addVacinaMutation = useMutation({
-    mutationFn: async (vacina: Omit<Vacina, "id">) => {
+    mutationFn: async (vacina: Omit<VacinaEntity, "id">) => {
       const vacinaToSend =
         vacina.doses > 1
           ? vacina
