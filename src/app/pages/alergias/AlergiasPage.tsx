@@ -25,10 +25,10 @@ import {
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
 import React, { useState } from "react";
+import { useNavigate } from "react-router";
 import { ApiResponse } from "../../../network-interface";
 import useApp from "../../shared/hooks/useApp";
 import { useStateConfirmationDialog } from "../../stores/app/hooks";
-import { useNavigate } from "react-router";
 
 export type AlergiaEntity = {
   id: string;

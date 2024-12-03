@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import DeleteIcon from "@mui/icons-material/Delete";
 import KeyboardArrowLeftIcon from "@mui/icons-material/KeyboardArrowLeft";
+import RemoveCircleOutlineOutlinedIcon from "@mui/icons-material/RemoveCircleOutlineOutlined";
 import {
   Alert,
   Box,
@@ -343,18 +343,18 @@ const UsuariosPage: React.FC = () => {
                       usuario.alergias.map((a) => (
                         <Stack
                           direction="row"
-                          spacing={1}
+                          spacing={0}
                           key={a.id}
                           alignItems="center"
                         >
                           <Typography>{a.nome}</Typography>
                           <IconButton
-                            color="error"
+                            color="default"
                             onClick={() =>
                               handleRemoveAlergia(usuario.id, a.id)
                             }
                           >
-                            <DeleteIcon />
+                            <RemoveCircleOutlineOutlinedIcon />
                           </IconButton>
                         </Stack>
                       ))) ||
