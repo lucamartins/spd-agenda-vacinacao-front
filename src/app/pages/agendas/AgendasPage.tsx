@@ -4,6 +4,7 @@ import {
   Alert,
   Box,
   Button,
+  Chip,
   Container,
   Dialog,
   DialogActions,
@@ -39,6 +40,7 @@ export type AgendaEntity = {
   data: string;
   observacoes: string | null;
   vacina: VacinaEntity;
+  doseIdx: number;
   usuario: UsuarioEntity;
   dataSituacao: string | null;
   situacao: string;
@@ -74,18 +76,54 @@ const AgendasPage: React.FC = () => {
     null
   );
   const [situacao, setSituacao] = useState<"DONE" | "CANCELED">("DONE");
+  const [filterSituacao, setFilterSituacao] = useState<string | "">("");
+  const [filterDataStart, setFilterDataStart] = useState<string>("");
+  const [filterDataEnd, setFilterDataEnd] = useState<string>("");
+  const [filterUsuarioId, setFilterUsuarioId] = useState<string | "">("");
 
   const {
     data: agendas,
     isLoading,
     isError,
   } = useQuery({
-    queryKey: ["agendas"],
+    queryKey: [
+      "agendas",
+      { filterSituacao, filterDataStart, filterDataEnd, filterUsuarioId },
+    ],
     queryFn: async () => {
+      const timeZoneOffset = new Date().getTimezoneOffset() / 60;
+      const endOfDay = filterDataEnd && new Date(filterDataEnd);
+      if (endOfDay) {
+        endOfDay.setUTCHours(23 + timeZoneOffset, 59, 59, 999);
+      }
+
       const response = await axios.get<ApiResponse<AgendaEntity[]>>(
-        "http://localhost:8080/agendas"
+        "http://localhost:8080/agendas",
+        {
+          params: {
+            situacao: filterSituacao || undefined,
+            dataStart:
+              (filterDataStart &&
+                new Date(
+                  new Date(filterDataStart).setHours(
+                    new Date(filterDataStart).getHours() + timeZoneOffset
+                  )
+                ).toISOString()) ||
+              undefined,
+            dataEnd: (endOfDay && endOfDay.toISOString()) || undefined,
+            usuarioId: filterUsuarioId || undefined,
+          },
+        }
       );
-      return response.data.data;
+      const sortedAgendas = response.data.data.sort((a, b) => {
+        const situacaoOrder: { [key: string]: number } = {
+          SCHEDULED: 1,
+          DONE: 2,
+          CANCELED: 3,
+        };
+        return situacaoOrder[a.situacao] - situacaoOrder[b.situacao];
+      });
+      return sortedAgendas;
     },
   });
 
@@ -204,6 +242,28 @@ const AgendasPage: React.FC = () => {
     }
   };
 
+  const handleFilterChange = (
+    e: React.ChangeEvent<HTMLInputElement | { name?: string; value: unknown }>
+  ) => {
+    const { name, value } = e.target;
+    switch (name) {
+      case "situacao":
+        setFilterSituacao(value as string);
+        break;
+      case "dataStart":
+        setFilterDataStart(value as string);
+        break;
+      case "dataEnd":
+        setFilterDataEnd(value as string);
+        break;
+      case "usuarioId":
+        setFilterUsuarioId(value as string);
+        break;
+      default:
+        break;
+    }
+  };
+
   if (isLoading) {
     return <Typography>Carregando...</Typography>;
   }
@@ -241,6 +301,63 @@ const AgendasPage: React.FC = () => {
             Adicionar Nova Agenda
           </Button>
         </Stack>
+
+        <Stack direction="row" spacing={2} my={2}>
+          <FormControl fullWidth>
+            <InputLabel id="filter-situacao-label">Situação</InputLabel>
+            <Select
+              labelId="filter-situacao-label"
+              name="situacao"
+              value={filterSituacao}
+              label="Situação"
+              onChange={(e) => handleFilterChange(e as any)}
+            >
+              <MenuItem value="">Todas</MenuItem>
+              <MenuItem value="SCHEDULED">Agendada</MenuItem>
+              <MenuItem value="DONE">Concluída</MenuItem>
+              <MenuItem value="CANCELED">Cancelada</MenuItem>
+            </Select>
+          </FormControl>
+
+          <FormControl fullWidth>
+            <InputLabel id="filter-usuario-label">Usuário</InputLabel>
+            <Select
+              labelId="filter-usuario-label"
+              name="usuarioId"
+              value={filterUsuarioId}
+              label="Usuário"
+              onChange={(e) => handleFilterChange(e as any)}
+            >
+              <MenuItem value="">Todos</MenuItem>
+              {usuarios?.map((usuario) => (
+                <MenuItem key={usuario.id} value={usuario.id}>
+                  {usuario.nome}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        </Stack>
+
+        <Stack direction="row" spacing={2} my={2}>
+          <TextField
+            label="Data Início"
+            type="date"
+            name="dataStart"
+            value={filterDataStart}
+            onChange={handleFilterChange}
+            InputLabelProps={{ shrink: true }}
+          />
+
+          <TextField
+            label="Data Fim"
+            type="date"
+            name="dataEnd"
+            value={filterDataEnd}
+            onChange={handleFilterChange}
+            InputLabelProps={{ shrink: true }}
+          />
+        </Stack>
+
         <TableContainer component={Paper}>
           <Table>
             <TableHead>
@@ -248,6 +365,7 @@ const AgendasPage: React.FC = () => {
                 <TableCell>Data</TableCell>
                 <TableCell>Observações</TableCell>
                 <TableCell>Vacina</TableCell>
+                <TableCell>Dose</TableCell>
                 <TableCell>Usuário</TableCell>
                 <TableCell>Situação</TableCell>
                 <TableCell>Data situação</TableCell>
@@ -262,8 +380,21 @@ const AgendasPage: React.FC = () => {
                   </TableCell>
                   <TableCell>{agenda.observacoes || "N/A"}</TableCell>
                   <TableCell>{agenda.vacina.titulo || "N/A"}</TableCell>
+                  <TableCell>{agenda.doseIdx + 1}</TableCell>
                   <TableCell>{agenda.usuario.nome || "N/A"}</TableCell>
-                  <TableCell>{agenda.situacao || "N/A"}</TableCell>
+                  <TableCell>
+                    <Chip
+                      label={agenda.situacao}
+                      size="small"
+                      color={
+                        agenda.situacao === "SCHEDULED"
+                          ? "primary"
+                          : agenda.situacao === "DONE"
+                          ? "success"
+                          : "error"
+                      }
+                    />
+                  </TableCell>
                   <TableCell>
                     {(agenda.dataSituacao &&
                       new Date(agenda.dataSituacao).toLocaleString()) ||
