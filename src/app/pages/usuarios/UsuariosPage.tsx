@@ -104,6 +104,110 @@ const UsuariosPage: React.FC = () => {
   const [novoUsuario, setNovoUsuario] =
     useState<Omit<UsuarioEntity, "id" | "alergias">>(USUARIO_FORM_EMPTY);
 
+  // alergias - start
+
+  const [isAddAlergiaDialogOpen, setIsAddAlergiaDialogOpen] = useState(false);
+  const [alergias, setAlergias] = useState<AlergiaEntity[]>([]);
+  const [selectedAlergiaId, setSelectedAlergiaId] = useState("");
+  const [currentUsuarioId, setCurrentUsuarioId] = useState<string | null>(null);
+
+  // Função para buscar as alergias disponíveis
+  const fetchAlergias = async () => {
+    try {
+      const response = await axios.get<ApiResponse<AlergiaEntity[]>>(
+        "http://localhost:8080/alergias"
+      );
+      setAlergias(response.data.data);
+    } catch {
+      openSnackbar({
+        message: "Erro ao buscar alergias.",
+        severity: "error",
+      });
+    }
+  };
+
+  // Mutation para adicionar alergia ao usuário
+  const addAlergiaMutation = useMutation({
+    mutationFn: async ({
+      usuarioId,
+      alergiaId,
+    }: {
+      usuarioId: string;
+      alergiaId: string;
+    }) => {
+      await axios.post(`http://localhost:8080/usuarios/${usuarioId}/alergias`, {
+        alergias: [alergiaId],
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["usuarios"] });
+      setIsAddAlergiaDialogOpen(false);
+      openSnackbar({
+        message: "Alergia adicionada com sucesso!",
+        severity: "success",
+      });
+    },
+    onError: (error: any) => {
+      openSnackbar({
+        message: error.response.data.errorMessages.join(", "),
+        severity: "error",
+      });
+    },
+  });
+
+  const handleOpenAddAlergiaDialog = (usuarioId: string) => {
+    setCurrentUsuarioId(usuarioId);
+    setSelectedAlergiaId("");
+    setIsAddAlergiaDialogOpen(true);
+    fetchAlergias();
+  };
+
+  const handleCloseAddAlergiaDialog = () => {
+    setIsAddAlergiaDialogOpen(false);
+  };
+
+  const handleAddAlergia = () => {
+    if (currentUsuarioId && selectedAlergiaId) {
+      addAlergiaMutation.mutate({
+        usuarioId: currentUsuarioId,
+        alergiaId: selectedAlergiaId,
+      });
+    }
+  };
+
+  const removeAlergiaMutation = useMutation({
+    mutationFn: async ({
+      usuarioId,
+      alergiaId,
+    }: {
+      usuarioId: string;
+      alergiaId: string;
+    }) => {
+      await axios.delete(
+        `http://localhost:8080/usuarios/${usuarioId}/alergias/${alergiaId}`
+      );
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["usuarios"] });
+      openSnackbar({
+        message: "Alergia removida com sucesso!",
+        severity: "success",
+      });
+    },
+    onError: (error: any) => {
+      openSnackbar({
+        message: error.response.data.errorMessages.join(", "),
+        severity: "error",
+      });
+    },
+  });
+
+  const handleRemoveAlergia = (usuarioId: string, alergiaId: string) => {
+    removeAlergiaMutation.mutate({ usuarioId, alergiaId });
+  };
+
+  // alergias - end
+
   const {
     data: usuarios,
     isLoading,
@@ -235,15 +339,43 @@ const UsuariosPage: React.FC = () => {
                     {usuario.cidade} - {usuario.uf.toUpperCase()}
                   </TableCell>
                   <TableCell>
-                    {usuario.alergias.map((a) => a.nome).join(", ") || "N/A"}
+                    {(!!usuario.alergias.length &&
+                      usuario.alergias.map((a) => (
+                        <Stack
+                          direction="row"
+                          spacing={1}
+                          key={a.id}
+                          alignItems="center"
+                        >
+                          <Typography>{a.nome}</Typography>
+                          <IconButton
+                            color="error"
+                            onClick={() =>
+                              handleRemoveAlergia(usuario.id, a.id)
+                            }
+                          >
+                            <DeleteIcon />
+                          </IconButton>
+                        </Stack>
+                      ))) ||
+                      "N/A"}
                   </TableCell>
                   <TableCell>
-                    <IconButton
+                    <Button
+                      color="primary"
+                      variant="outlined"
+                      onClick={() => handleOpenAddAlergiaDialog(usuario.id)}
+                      style={{ marginRight: 1 }}
+                    >
+                      Adicionar Alergia
+                    </Button>
+                    <Button
                       color="error"
+                      variant="outlined"
                       onClick={() => handleDelete(usuario.id)}
                     >
-                      <DeleteIcon />
-                    </IconButton>
+                      Excluir
+                    </Button>
                   </TableCell>
                 </TableRow>
               ))}
@@ -342,19 +474,6 @@ const UsuariosPage: React.FC = () => {
                 ))}
               </Select>
             </FormControl>
-            {/* <TextField
-              margin="dense"
-              label="Alergias (separadas por vírgula)"
-              name="alergias"
-              fullWidth
-              value={novoUsuario.alergias.join(", ")}
-              onChange={(e) =>
-                setNovoUsuario((prev) => ({
-                  ...prev,
-                  alergias: e.target.value.split(",").map((a) => a.trim()),
-                }))
-              }
-            /> */}
           </DialogContent>
           <DialogActions>
             <Button onClick={handleCloseDialog} color="primary">
@@ -362,6 +481,52 @@ const UsuariosPage: React.FC = () => {
             </Button>
             <Button
               onClick={handleAddUsuario}
+              color="primary"
+              variant="contained"
+            >
+              Adicionar
+            </Button>
+          </DialogActions>
+        </Dialog>
+
+        {/* DIALOG - ADD ALERGIA */}
+        <Dialog
+          open={isAddAlergiaDialogOpen}
+          onClose={handleCloseAddAlergiaDialog}
+          maxWidth="sm"
+          fullWidth
+        >
+          <DialogTitle>Adicionar Alergia</DialogTitle>
+          <DialogContent>
+            <FormControl fullWidth margin="dense">
+              <InputLabel id="alergia-label">Alergia</InputLabel>
+              <Select
+                labelId="alergia-label"
+                value={selectedAlergiaId}
+                label="Alergia"
+                onChange={(e) => setSelectedAlergiaId(e.target.value as string)}
+              >
+                {alergias
+                  .filter((a) => {
+                    const alergiasUsuario =
+                      usuarios?.find((u) => u.id == currentUsuarioId)
+                        ?.alergias || [];
+                    return !alergiasUsuario.find((au) => au.id == a.id);
+                  })
+                  .map((alergia) => (
+                    <MenuItem key={alergia.id} value={alergia.id}>
+                      {alergia.nome}
+                    </MenuItem>
+                  ))}
+              </Select>
+            </FormControl>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={handleCloseAddAlergiaDialog} color="primary">
+              Cancelar
+            </Button>
+            <Button
+              onClick={handleAddAlergia}
               color="primary"
               variant="contained"
             >

@@ -271,20 +271,20 @@ const AgendasPage: React.FC = () => {
                   </TableCell>
                   <TableCell>
                     <Button
-                      color="error"
-                      variant="outlined"
-                      onClick={() => handleDelete(agenda.id)}
-                      sx={{ marginRight: 1 }}
-                    >
-                      Excluir
-                    </Button>
-                    <Button
                       variant="outlined"
                       color="primary"
                       disabled={agenda.situacao !== "SCHEDULED"}
                       onClick={() => handleOpenBaixaDialog(agenda.id)}
+                      sx={{ marginRight: 1 }}
                     >
                       Dar Baixa
+                    </Button>
+                    <Button
+                      color="error"
+                      variant="outlined"
+                      onClick={() => handleDelete(agenda.id)}
+                    >
+                      Excluir
                     </Button>
                   </TableCell>
                 </TableRow>
