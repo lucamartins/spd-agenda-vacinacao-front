@@ -80,6 +80,11 @@ const AgendasPage: React.FC = () => {
   const [filterDataStart, setFilterDataStart] = useState<string>("");
   const [filterDataEnd, setFilterDataEnd] = useState<string>("");
   const [filterUsuarioId, setFilterUsuarioId] = useState<string | "">("");
+  const [isReagendarDialogOpen, setIsReagendarDialogOpen] = useState<
+    string | null
+  >(null);
+  const [novaDataReagendamento, setNovaDataReagendamento] =
+    useState<string>("");
 
   const {
     data: agendas,
@@ -115,7 +120,12 @@ const AgendasPage: React.FC = () => {
           },
         }
       );
-      const sortedAgendas = response.data.data.sort((a, b) => {
+
+      const sortedAgendasByDateAsc = response.data.data.sort(
+        (a, b) => new Date(a.data).getTime() - new Date(b.data).getTime()
+      );
+
+      const sortedAgendasBySituacao = sortedAgendasByDateAsc.sort((a, b) => {
         const situacaoOrder: { [key: string]: number } = {
           SCHEDULED: 1,
           DONE: 2,
@@ -123,7 +133,8 @@ const AgendasPage: React.FC = () => {
         };
         return situacaoOrder[a.situacao] - situacaoOrder[b.situacao];
       });
-      return sortedAgendas;
+
+      return sortedAgendasBySituacao;
     },
   });
 
@@ -201,6 +212,39 @@ const AgendasPage: React.FC = () => {
       });
     },
   });
+
+  const reagendarAgendaMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: string }) => {
+      await axios.post(`http://localhost:8080/agendas/${id}/reagendar`, {
+        data: new Date(data).toISOString(),
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["agendas"] });
+      setIsReagendarDialogOpen(null);
+      setNovaDataReagendamento("");
+    },
+    onError: (error: any) => {
+      openSnackbar({
+        message: error.response.data.errorMessages.join(", "),
+        severity: "error",
+      });
+    },
+  });
+
+  const handleOpenReagendarDialog = (id: string) => {
+    setIsReagendarDialogOpen(id);
+    setNovaDataReagendamento("");
+  };
+
+  const handleReagendarAgenda = () => {
+    if (isReagendarDialogOpen) {
+      reagendarAgendaMutation.mutate({
+        id: isReagendarDialogOpen,
+        data: novaDataReagendamento,
+      });
+    }
+  };
 
   const handleDelete = (id: string) => {
     startConfirmationDialogFlow({
@@ -401,22 +445,36 @@ const AgendasPage: React.FC = () => {
                       "N/A"}
                   </TableCell>
                   <TableCell>
-                    <Button
-                      variant="outlined"
-                      color="primary"
-                      disabled={agenda.situacao !== "SCHEDULED"}
-                      onClick={() => handleOpenBaixaDialog(agenda.id)}
-                      sx={{ marginRight: 1 }}
-                    >
-                      Dar Baixa
-                    </Button>
-                    <Button
-                      color="error"
-                      variant="outlined"
-                      onClick={() => handleDelete(agenda.id)}
-                    >
-                      Excluir
-                    </Button>
+                    <Stack direction="row" spacing={1}>
+                      <Button
+                        variant="outlined"
+                        color="warning"
+                        size="small"
+                        disabled={agenda.situacao !== "SCHEDULED"}
+                        onClick={() => handleOpenReagendarDialog(agenda.id)}
+                        sx={{ marginRight: 1 }}
+                      >
+                        Reagendar
+                      </Button>
+                      <Button
+                        variant="outlined"
+                        color="primary"
+                        size="small"
+                        disabled={agenda.situacao !== "SCHEDULED"}
+                        onClick={() => handleOpenBaixaDialog(agenda.id)}
+                        sx={{ marginRight: 1 }}
+                      >
+                        Dar Baixa
+                      </Button>
+                      <Button
+                        color="error"
+                        variant="outlined"
+                        size="small"
+                        onClick={() => handleDelete(agenda.id)}
+                      >
+                        Excluir
+                      </Button>
+                    </Stack>
                   </TableCell>
                 </TableRow>
               ))}
@@ -536,6 +594,42 @@ const AgendasPage: React.FC = () => {
             </Button>
             <Button
               onClick={handleBaixaAgenda}
+              color="primary"
+              variant="contained"
+            >
+              Confirmar
+            </Button>
+          </DialogActions>
+        </Dialog>
+
+        {/* DIALOG - REAGENDAR AGENDA */}
+        <Dialog
+          open={!!isReagendarDialogOpen}
+          onClose={() => setIsReagendarDialogOpen(null)}
+          maxWidth="sm"
+          fullWidth
+        >
+          <DialogTitle>Reagendar Agenda</DialogTitle>
+          <DialogContent>
+            <TextField
+              margin="dense"
+              label="Nova Data"
+              type="datetime-local"
+              fullWidth
+              value={novaDataReagendamento}
+              onChange={(e) => setNovaDataReagendamento(e.target.value)}
+              InputLabelProps={{ shrink: true }}
+            />
+          </DialogContent>
+          <DialogActions>
+            <Button
+              onClick={() => setIsReagendarDialogOpen(null)}
+              color="primary"
+            >
+              Cancelar
+            </Button>
+            <Button
+              onClick={handleReagendarAgenda}
               color="primary"
               variant="contained"
             >

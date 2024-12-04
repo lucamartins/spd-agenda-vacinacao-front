@@ -365,9 +365,9 @@ const UsuariosPage: React.FC = () => {
                       color="primary"
                       variant="outlined"
                       onClick={() => handleOpenAddAlergiaDialog(usuario.id)}
-                      style={{ marginRight: 1 }}
+                      style={{ marginRight: 8 }}
                     >
-                      Adicionar Alergia
+                      Add Alergia
                     </Button>
                     <Button
                       color="error"
